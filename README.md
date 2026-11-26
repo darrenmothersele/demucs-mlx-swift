@@ -1,5 +1,7 @@
 # demucs-mlx-swift
 
+> **Fork** of [kylehowells/demucs-mlx-swift](https://github.com/kylehowells/demucs-mlx-swift) for the Mix Rebalance app. It loads models only from the directory you pass in, and has no Hugging Face download (and so no `swift-transformers` dependency). Everything else matches upstream.
+
 Swift package for Demucs music source separation on Apple Silicon, using the [MLX](https://github.com/ml-explore/mlx-swift) GPU framework.
 
 Separates audio into stems: drums, bass, other, vocals (and guitar + piano for the 6-stem model).
@@ -13,7 +15,7 @@ Separates audio into stems: drums, bass, other, vocals (and guitar + piano for t
 - Async separation API with progress reporting, ETA estimation, and cancellation
 - Multi-format output: WAV (16/24/32-bit), FLAC, ALAC, AAC
 - Two-stem mode (e.g. vocals + no_vocals)
-- Automatic model download from Hugging Face
+- Loads models from a directory you choose; a missing model is an error
 
 ## Supported Models
 
@@ -30,7 +32,7 @@ All 8 pretrained Demucs models are supported. Benchmarks on a 3:19 track (M1 Pro
 | `mdx_q` | Demucs v3 + HDemucs (bag of 4) | 4 | 120.6s |
 | `mdx_extra_q` | HTDemucs (bag of 4) | 4 | 153.3s |
 
-Model files are downloaded automatically from [Hugging Face](https://huggingface.co/iky1e/demucs-mlx) on first use.
+Download the model files from [Hugging Face](https://huggingface.co/iky1e/demucs-mlx) and pass their directory to the library (`modelDirectory`) or the CLI (`--model-dir`).
 
 ## Requirements
 
@@ -44,7 +46,7 @@ Model files are downloaded automatically from [Hugging Face](https://huggingface
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/kylehowells/demucs-mlx-swift", branch: "master")
+    .package(url: "https://github.com/darrenmothersele/demucs-mlx-swift", branch: "master")
 ]
 ```
 
@@ -61,7 +63,10 @@ import DemucsMLX
 ```swift
 import DemucsMLX
 
-let separator = try DemucsSeparator(modelName: "htdemucs")
+let separator = try DemucsSeparator(
+    modelName: "htdemucs",
+    modelDirectory: URL(fileURLWithPath: "/path/to/models")
+)
 
 let result = try separator.separate(fileAt: URL(fileURLWithPath: "song.mp3"))
 
@@ -74,7 +79,10 @@ for (source, audio) in result.stems {
 ### Async with Progress and Cancellation
 
 ```swift
-let separator = try DemucsSeparator(modelName: "htdemucs")
+let separator = try DemucsSeparator(
+    modelName: "htdemucs",
+    modelDirectory: URL(fileURLWithPath: "/path/to/models")
+)
 let cancelToken = DemucsCancelToken()
 
 separator.separate(
@@ -132,7 +140,7 @@ make build
 Run:
 
 ```bash
-.build/release/demucs-mlx-swift track.mp3 -o separated
+.build/release/demucs-mlx-swift track.mp3 --model-dir models -o separated
 ```
 
 Options:
@@ -161,16 +169,16 @@ Examples:
 
 ```bash
 # Separate vocals only
-.build/release/demucs-mlx-swift song.mp3 --two-stems vocals -o out
+.build/release/demucs-mlx-swift song.mp3 --model-dir models --two-stems vocals -o out
 
 # Use fine-tuned model with FLAC output
-.build/release/demucs-mlx-swift song.mp3 -n htdemucs_ft --flac -o out
+.build/release/demucs-mlx-swift song.mp3 --model-dir models -n htdemucs_ft --flac -o out
 
 # 6-stem separation (drums, bass, other, vocals, guitar, piano)
-.build/release/demucs-mlx-swift song.mp3 -n htdemucs_6s -o out
+.build/release/demucs-mlx-swift song.mp3 --model-dir models -n htdemucs_6s -o out
 
 # Async with progress bar
-.build/release/demucs-mlx-swift song.mp3 --async -o out
+.build/release/demucs-mlx-swift song.mp3 --model-dir models --async -o out
 ```
 
 ## Performance Tuning
@@ -198,17 +206,7 @@ Memory.cacheLimit = 2 * 1024 * 1024
 
 ## Model Resolution
 
-Models are resolved in this order:
-
-1. Explicit `--model-dir` (or library `modelDirectory` parameter)
-2. `DEMUCS_MLX_SWIFT_MODEL_DIR` environment variable
-3. `~/.cache/demucs-mlx-swift-models/<model>`
-4. Local paths: `.scratch/models/<model>`, `Models/<model>`, `./<model>`
-5. Hugging Face download (default repo: `iky1e/demucs-mlx`)
-
-Environment overrides:
-
-- `DEMUCS_MLX_SWIFT_MODEL_REPO` — set to a Hub repo ID (`org/repo`) or URL.
+The library looks for `<model>.safetensors` and `<model>_config.json` in `<directory>/<model>/`, then in `<directory>` itself, where `<directory>` is the `modelDirectory` parameter or `--model-dir`. It searches nowhere else and downloads nothing; if the files are missing, it throws.
 
 ## Metal Shader Library (Required for MLX Inference)
 

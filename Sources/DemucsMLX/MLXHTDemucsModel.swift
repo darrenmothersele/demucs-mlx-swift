@@ -628,8 +628,8 @@ final class NativeHTDemucsModel: StemSeparationModel {
     let descriptor: DemucsModelDescriptor
     private let graph: HTDemucsGraph
 
-    init(descriptor: DemucsModelDescriptor, modelDirectory: URL?) throws {
-        let directory = try ModelLoader.resolveModelDirectory(modelName: descriptor.name, preferred: modelDirectory)
+    init(descriptor: DemucsModelDescriptor, modelDirectory: URL) throws {
+        let directory = try ModelLoader.resolveModelDirectory(modelName: descriptor.name, in: modelDirectory)
         let config = try ModelLoader.loadConfig(from: directory, modelName: descriptor.name)
 
         let cfg = try HTDemucsRuntimeConfig.fromJSON(config)

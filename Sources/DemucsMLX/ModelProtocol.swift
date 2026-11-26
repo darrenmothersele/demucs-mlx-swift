@@ -21,10 +21,10 @@ enum DemucsModelFactory {
     /// Reads the config JSON to determine model_class and routes accordingly.
     static func makeModel(
         for descriptor: DemucsModelDescriptor,
-        modelDirectory: URL? = nil
+        modelDirectory: URL
     ) throws -> StemSeparationModel {
         let directory = try ModelLoader.resolveModelDirectory(
-            modelName: descriptor.name, preferred: modelDirectory
+            modelName: descriptor.name, in: modelDirectory
         )
         let config = try ModelLoader.loadConfig(from: directory, modelName: descriptor.name)
 

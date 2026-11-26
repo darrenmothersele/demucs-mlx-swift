@@ -11,7 +11,7 @@ public final class DemucsSeparator: @unchecked Sendable {
     public init(
         modelName: String = "htdemucs",
         parameters: DemucsSeparationParameters = DemucsSeparationParameters(),
-        modelDirectory: URL? = nil
+        modelDirectory: URL
     ) throws {
         self.modelName = modelName
         self.descriptor = try DemucsModelRegistry.descriptor(for: modelName)

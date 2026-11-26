@@ -102,8 +102,11 @@ public struct DemucsCLI: ParsableCommand {
             seed: seed
         )
 
+        guard let modelDir else {
+            throw ValidationError("--model-dir is required")
+        }
         print("Loading model '\(name)'...")
-        let modelDirectoryURL = modelDir.map { URL(fileURLWithPath: $0, isDirectory: true) }
+        let modelDirectoryURL = URL(fileURLWithPath: modelDir, isDirectory: true)
         let separator = try DemucsSeparator(modelName: name, parameters: params, modelDirectory: modelDirectoryURL)
         print("Model loaded. Sources: \(separator.sources.joined(separator: ", "))")
 
